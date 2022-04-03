@@ -1,0 +1,39 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches-ignore:
+      - 'renovate/**'
+    paths-ignore:
+      - 'CHANGELOG.md'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Read environment vars
+        uses: cardinalby/export-env-action@v1
+        with:
+          envFile: ".env"
+          expand: "true"
+      -
+        name: Release
+        run: |
+          npm ci
+          npx semantic-release
